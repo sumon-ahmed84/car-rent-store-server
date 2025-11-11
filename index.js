@@ -38,6 +38,15 @@ async function run() {
         result})
     })
 
+    app.get("/FeaturedCars", async (req, res) => {
+      const query = carCollection.find().sort({created_at: -1}).limit(6);
+      const result = await query.toArray();
+      res.send({
+        success: true,
+        result
+      })
+    })
+
     app.post('/all_cars', async(req, res)=>{
       const newCar=req.body
       const result=await carCollection.insertOne(newCar)
