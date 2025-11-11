@@ -1,6 +1,6 @@
 const express = require('express')
 const cors = require('cors')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
 const port = process.env.PORT || 3000;
 
@@ -29,11 +29,21 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/all_cars/:id', async(req, res)=>{
+      const {id}=req.params
+      const query= new  ObjectId(id)
+      const result=await carCollection.findOne({_id: query})
+      res.send({
+        success:true,
+        result})
+    })
+
     app.post('/all_cars', async(req, res)=>{
       const newCar=req.body
-      console.log(newCar);
       const result=await carCollection.insertOne(newCar)
-      res.send(result)
+      res.send({
+        success:true,
+        result})
     })
 
 
