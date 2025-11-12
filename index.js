@@ -68,8 +68,9 @@ async function run() {
       });
     });
 
-    app.post("/bookings", async (req, res) => {
+    app.post("/bookings/:id", async (req, res) => {
       const booking = req.body;
+      const id= req.params.id;
       const result = await bookingCollection.insertOne(booking);
       res.send({
         success: true,
@@ -83,6 +84,15 @@ async function run() {
         boking_by: email,
       };
       const result = await bookingCollection.find(query).toArray();
+      res.send({
+        success: true,
+        result,
+      });
+    });
+
+    app.get("/search", async (req, res) => {
+      const search_text = req.query.search;
+      const result = await carCollection.find({ name: { $regex: search_text, $options: "i" } }).toArray();
       res.send({
         success: true,
         result,
