@@ -99,6 +99,62 @@ async function run() {
       });
     });
 
+
+    app.put("/all_cars/:id", async (req, res) => {
+      const { id } = req.params;
+      const data = req.body;
+
+      // Validate ObjectId
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ success: false, message: "Invalid car ID" });
+      }
+
+      // Validate update data
+      if (!data || Object.keys(data).length === 0) {
+        return res.status(400).send({ success: false, message: "No update data provided" });
+      }
+
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = { $set: data };
+      const result = await carCollection.updateOne(query, updateDoc);
+
+      if (result.matchedCount === 0) {
+        return res.status(404).send({ success: false, message: "Car not found" });
+      }
+
+      res.send({
+        success: true,
+        message: "Car updated successfully",
+        result,
+      });
+    });
+
+
+    //  app.put("/all_cars/:id", async (req, res) => {
+    //   const { id } = req.params;
+    //   const data = req.body
+    //   console.log(id);
+    //   console.log(data);
+      
+      
+    //   const query = new ObjectId(id);
+    //   const result = await carCollection.updateOne({ _id: query });
+    //   res.send({
+    //     success: true,
+    //     result,
+    //   });
+    // });
+
+     app.delete("/all_cars/:id", async (req, res) => {
+      const {id}=req.params;
+      const result = await carCollection.deleteOne({_id: new ObjectId(id)});
+      res.send({
+        success: true,
+        result,
+      });
+    });
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
