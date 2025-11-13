@@ -4,11 +4,23 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
 
+
+require("dotenv").config()
+
+const admin = require("firebase-admin");
+
+const serviceAccount = require("./firebase-adminsdk.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+
 app.use(cors());
 app.use(express.json());
 
 const uri =
-  "mongodb+srv://Car-rent-DB:YSZF06ecNMLfPUf5@cluster0.xhsdu7s.mongodb.net/?appName=Cluster0";
+  `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.xhsdu7s.mongodb.net/?appName=Cluster0`;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -20,7 +32,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     const db = client.db("car_rent_db");
     const carCollection = db.collection("all_cars");
     const bookingCollection = db.collection("bookings");
@@ -49,6 +61,23 @@ async function run() {
       });
     });
 
+
+     app.get("/toprated", async (req, res) => {
+      const query = carCollection.find().sort({ rating: -1 }).limit(6);
+      const result = await query.toArray();
+      console.log(result);
+      
+      res.send({
+        success: true,
+        result,
+      });
+    });
+
+
+
+
+
+
     app.post("/all_cars", async (req, res) => {
       const newCar = req.body;
       const result = await carCollection.insertOne(newCar);
@@ -68,9 +97,8 @@ async function run() {
       });
     });
 
-    app.post("/bookings/:id", async (req, res) => {
+    app.post("/bookings", async (req, res) => {
       const booking = req.body;
-      const id= req.params.id;
       const result = await bookingCollection.insertOne(booking);
       res.send({
         success: true,
@@ -78,17 +106,12 @@ async function run() {
       });
     });
 
-    app.get("/my_bookings", async (req, res) => {
-      const email = req.query.email;
-      const query = {
-        boking_by: email,
-      };
-      const result = await bookingCollection.find(query).toArray();
-      res.send({
-        success: true,
-        result,
-      });
-    });
+   app.get("/my_bookings", async (req, res) => {
+  const email = req.query.email;
+  const query = { booking_by: email };
+  const result = await bookingCollection.find(query).toArray();
+  res.send({ success: true, result });
+});
 
     app.get("/search", async (req, res) => {
       const search_text = req.query.search;
@@ -104,12 +127,10 @@ async function run() {
       const { id } = req.params;
       const data = req.body;
 
-      // Validate ObjectId
       if (!ObjectId.isValid(id)) {
         return res.status(400).send({ success: false, message: "Invalid car ID" });
       }
 
-      // Validate update data
       if (!data || Object.keys(data).length === 0) {
         return res.status(400).send({ success: false, message: "No update data provided" });
       }
@@ -130,20 +151,6 @@ async function run() {
     });
 
 
-    //  app.put("/all_cars/:id", async (req, res) => {
-    //   const { id } = req.params;
-    //   const data = req.body
-    //   console.log(id);
-    //   console.log(data);
-      
-      
-    //   const query = new ObjectId(id);
-    //   const result = await carCollection.updateOne({ _id: query });
-    //   res.send({
-    //     success: true,
-    //     result,
-    //   });
-    // });
 
      app.delete("/all_cars/:id", async (req, res) => {
       const {id}=req.params;
@@ -154,14 +161,13 @@ async function run() {
       });
     });
 
-
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
   } finally {
-    // Ensures that the client will close when you finish/error
+    
   }
 }
 run().catch(console.dir);
